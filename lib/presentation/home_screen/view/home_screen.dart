@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../cart/controller/cart_controller.dart';
 import '../../cart/view/cart_screen.dart';
 import '../../product_details/view/product_details_screen.dart';
+import '../../wishlist/controller/wishlist_controller.dart';
 import '../controller/home_controller.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/product_card.dart';
@@ -11,190 +13,190 @@ import '../widgets/promo_banner.dart';
 import '../widgets/search_bar_widget.dart';
 
 /// The primary E-commerce Home / Product Listing Screen.
-/// Built as a [StatelessWidget] for purity, routing state management to [HomeController].
+/// Refactored to listen to controllers reactively via Provider.
 class HomeScreen extends StatelessWidget {
-  final HomeController _controller = HomeController();
-
-  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final homeController = context.watch<HomeController>();
+    final cartController = context.watch<CartController>();
+
     return Scaffold(
       backgroundColor: AppColors.bgMain,
-      appBar: _buildAppBar(context),
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          return RefreshIndicator(
-            onRefresh: _controller.refreshProducts,
-            color: AppColors.primary,
-            backgroundColor: AppColors.bgCard,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // Header text & Search section
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Find Your Best Fit',
-                          style: AppTextStyles.displayHeader,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Explore premium collections curated just for you.',
-                          style: AppTextStyles.bodySecondary,
-                        ),
-                        const SizedBox(height: 16),
-                        SearchBarWidget(
-                          onChanged: _controller.updateSearchQuery,
-                          onFilterTap: () {
-                            // Bottom sheet filter or dialog action
-                            _showFilterBottomSheet(context);
-                          },
-                        ),
-                      ],
+      appBar: _buildAppBar(context, cartController, homeController),
+      body: RefreshIndicator(
+        onRefresh: homeController.refreshProducts,
+        color: AppColors.primary,
+        backgroundColor: AppColors.bgCard,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Header text & Search section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Explore premium collections curated just for you.',
+                      style: AppTextStyles.bodySecondary,
                     ),
-                  ),
-                ),
-
-                // Promo Banners Section
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: PromoBanner(),
-                  ),
-                ),
-
-                // Categories Header & Chip selector
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Categories',
-                                style: AppTextStyles.sectionHeader,
-                              ),
-                              TextButton(
-                                onPressed: () => _controller.selectCategory('All'),
-                                child: Text(
-                                  'See All',
-                                  style: AppTextStyles.chipLabel.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        CategorySelector(
-                          categories: _controller.categories,
-                          selectedCategory: _controller.selectedCategory,
-                          onCategorySelected: _controller.selectCategory,
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    SearchBarWidget(
+                      onChanged: homeController.updateSearchQuery,
                     ),
-                  ),
+                  ],
                 ),
-
-                // Product grid title / items count
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Popular Products',
-                          style: AppTextStyles.subSectionHeader,
-                        ),
-                        if (!_controller.isLoading)
-                          Text(
-                            '${_controller.products.length} items found',
-                            style: AppTextStyles.bodyMuted,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Loading, Empty, or Product Grid Layout
-                _buildProductSection(),
-
-                // Bottom padding
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 24),
-                ),
-              ],
+              ),
             ),
-          );
-        },
+
+            // Promo Banners Section
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: PromoBanner(),
+              ),
+            ),
+
+            // Categories Header & Chip selector
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Categories',
+                            style: AppTextStyles.sectionHeader,
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                homeController.selectCategory('All'),
+                            child: Text(
+                              'See All',
+                              style: AppTextStyles.chipLabel.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    CategorySelector(
+                      categories: homeController.categories,
+                      selectedCategory: homeController.selectedCategory,
+                      onCategorySelected: homeController.selectCategory,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Product grid title / items count
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Popular Products',
+                      style: AppTextStyles.subSectionHeader,
+                    ),
+                    if (!homeController.isLoading &&
+                        homeController.errorMessage == null)
+                      Text(
+                        '${homeController.products.length} items found',
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Loading, Empty, Error, or Product Grid Layout
+            _buildProductSection(context, homeController),
+
+            // Bottom padding
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
 
   /// App Bar builder for a cleaner root build method
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final cartController = CartController.instance;
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    CartController cartController,
+    HomeController homeController,
+  ) {
+    final count = cartController.itemCount;
 
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.grid_view_rounded, color: AppColors.textPrimary),
-        onPressed: () {},
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'SwiftCart',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
       ),
+
       actions: [
-        ListenableBuilder(
-          listenable: cartController,
-          builder: (context, _) {
-            final count = cartController.itemCount;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textPrimary),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CartScreen()),
-                    );
-                  },
-                ),
-                if (count > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        count.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.shopping_bag_outlined,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CartScreen()),
+                );
+              },
+            ),
+            if (count > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-              ],
-            );
-          },
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(width: 12),
         const CircleAvatar(
@@ -208,9 +210,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Grid viewport logic based on state (Loading, Empty, Data)
-  Widget _buildProductSection() {
-    if (_controller.isLoading) {
+  /// Grid viewport logic based on state (Loading, Empty, Data, Error)
+  Widget _buildProductSection(
+    BuildContext context,
+    HomeController homeController,
+  ) {
+    if (homeController.isLoading) {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         sliver: SliverGrid(
@@ -228,7 +233,52 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
-    if (_controller.products.isEmpty) {
+    if (homeController.errorMessage != null) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: AppColors.wishlist,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to Load Products',
+                style: AppTextStyles.subSectionHeader,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                homeController.errorMessage!,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySecondary,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: homeController.loadProducts,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (homeController.products.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
@@ -261,8 +311,8 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  _controller.selectCategory('All');
-                  _controller.updateSearchQuery('');
+                  homeController.selectCategory('All');
+                  homeController.updateSearchQuery('');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -270,7 +320,10 @@ class HomeScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
                 child: const Text('Reset Filters'),
               ),
@@ -289,29 +342,27 @@ class HomeScreen extends StatelessWidget {
           crossAxisSpacing: 16.0,
           mainAxisSpacing: 16.0,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final product = _controller.products[index];
-            return ProductCard(
-              product: product,
-              onWishlistTap: () => _controller.toggleWishlist(product.id),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailsScreen(product: product),
-                  ),
-                );
-              },
-            );
-          },
-          childCount: _controller.products.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final product = homeController.products[index];
+          return ProductCard(
+            product: product,
+            onWishlistTap: () {
+              context.read<WishlistController>().toggleWishlist(product.id);
+            },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailsScreen(product: product),
+                ),
+              );
+            },
+          );
+        }, childCount: homeController.products.length),
       ),
     );
   }
 
-  /// Shimmer loading placeholder for the grid
   Widget _buildShimmerCard() {
     return Container(
       decoration: BoxDecoration(
@@ -326,7 +377,9 @@ class HomeScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.bgSearch.withValues(alpha: 0.5),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20.0)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20.0),
+                ),
               ),
             ),
           ),
@@ -376,91 +429,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
-      ),
-    );
-  }
-
-  /// Show standard filters sheet
-  void _showFilterBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.bgCard,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
-          ),
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Filter Options', style: AppTextStyles.sectionHeader),
-              const SizedBox(height: 16),
-              const Text('Sort By', style: AppTextStyles.subSectionHeader),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildFilterChip('Relevance', true),
-                  _buildFilterChip('Price: Low to High', false),
-                  _buildFilterChip('Price: High to Low', false),
-                  _buildFilterChip('Customer Rating', false),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) {},
-      selectedColor: AppColors.primaryLight,
-      labelStyle: TextStyle(
-        color: isSelected ? AppColors.primary : AppColors.textSecondary,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-      backgroundColor: AppColors.bgMain,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(
-          color: isSelected ? AppColors.primary : AppColors.borderLight,
-        ),
       ),
     );
   }

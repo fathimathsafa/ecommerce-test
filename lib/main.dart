@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'core/theme/app_colors.dart';
+import 'presentation/cart/controller/cart_controller.dart';
 import 'presentation/cart/view/cart_screen.dart';
+import 'presentation/home_screen/controller/home_controller.dart';
+import 'presentation/navigation/controller/navigation_controller.dart';
 import 'presentation/splash_screen/view/splash_screen.dart';
+import 'presentation/wishlist/controller/wishlist_controller.dart';
+import 'presentation/profile/controller/profile_controller.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WishlistController()),
+        ChangeNotifierProvider(create: (_) => CartController()),
+        ChangeNotifierProvider(create: (_) => HomeController()),
+        ChangeNotifierProvider(create: (_) => NavigationController()),
+        ChangeNotifierProvider(create: (_) => ProfileController()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ewire E-commerce',
+      title: 'SwiftCart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -24,6 +41,20 @@ class MyApp extends StatelessWidget {
           surface: AppColors.bgMain,
         ),
         scaffoldBackgroundColor: AppColors.bgMain,
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.textPrimary,
+          contentTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          elevation: 4.0,
+          actionTextColor: AppColors.accent,
+        ),
       ),
       home: const SplashScreen(),
       routes: {

@@ -139,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           const SizedBox(height: 24),
                           // Brand Typography
                           const Text(
-                            'ewire',
+                            'SwiftCart',
                             style: TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.w900,

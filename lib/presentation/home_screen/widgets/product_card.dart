@@ -1,25 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../data/models/product.dart';
+import '../../product_details/view/product_details_screen.dart';
 import '../../wishlist/controller/wishlist_controller.dart';
+import '../../cart/controller/cart_controller.dart';
+import '../model/product_model.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
-  final VoidCallback onWishlistTap;
+  final VoidCallback? onWishlistTap;
   final VoidCallback? onTap;
 
   const ProductCard({
     super.key,
     required this.product,
-    required this.onWishlistTap,
+    this.onWishlistTap,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final wishlistController = context.watch<WishlistController>();
+    final isWishlisted = wishlistController.isWishlisted(product.id);
+
+    final double currentPrice = product.price ?? 0.0;
+    final double discount = product.discountPercentage ?? 0.0;
+    final bool hasDiscount = discount > 0;
+    
+    // Calculate the original price before discount
+    final double originalPrice = hasDiscount 
+        ? currentPrice / (1 - (discount / 100)) 
+        : currentPrice;
+
+    final reviewCount = product.reviews?.length ?? 0;
+    final tags = product.tags ?? [];
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap ?? () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailsScreen(product: product),
+          ),
+        );
+      },
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.bgCard,
@@ -48,7 +73,7 @@ class ProductCard extends StatelessWidget {
                   // Image with loading & error fallbacks
                   Positioned.fill(
                     child: Image.network(
-                      product.imageUrl,
+                      product.thumbnail ?? (product.images != null && product.images!.isNotEmpty ? product.images!.first : ''),
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
@@ -67,7 +92,6 @@ class ProductCard extends StatelessWidget {
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
-                        // Fallback container when offline or link is broken
                         return Container(
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
@@ -89,7 +113,7 @@ class ProductCard extends StatelessWidget {
                   ),
 
                   // Discount Badge
-                  if (product.discountPercentage > 0)
+                  if (hasDiscount)
                     Positioned(
                       top: 12,
                       left: 12,
@@ -103,7 +127,7 @@ class ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '${product.discountPercentage}% OFF',
+                          '${discount.round()}% OFF',
                           style: AppTextStyles.chipLabelSelected.copyWith(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -119,26 +143,22 @@ class ProductCard extends StatelessWidget {
                     child: ClipOval(
                       child: Material(
                         color: Colors.white.withValues(alpha: 0.9),
-                        child: ListenableBuilder(
-                          listenable: WishlistController.instance,
-                          builder: (context, _) {
-                            final isWishlisted = WishlistController.instance.isWishlisted(product.id);
-                            return InkWell(
-                              onTap: onWishlistTap,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  isWishlisted 
-                                      ? Icons.favorite_rounded 
-                                      : Icons.favorite_border_rounded,
-                                  color: isWishlisted 
-                                      ? AppColors.wishlist 
-                                      : AppColors.wishlistInactive,
-                                  size: 20,
-                                ),
-                              ),
-                            );
+                        child: InkWell(
+                          onTap: onWishlistTap ?? () {
+                            context.read<WishlistController>().toggleWishlist(product.id);
                           },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              isWishlisted 
+                                  ? Icons.favorite_rounded 
+                                  : Icons.favorite_border_rounded,
+                              color: isWishlisted 
+                                  ? AppColors.wishlist 
+                                  : AppColors.wishlistInactive,
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -167,7 +187,7 @@ class ProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            product.rating.toString(),
+                            (product.rating ?? 0.0).toStringAsFixed(1),
                             style: AppTextStyles.ratingText.copyWith(
                               color: Colors.white,
                               fontSize: 10,
@@ -175,7 +195,7 @@ class ProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            '(${product.reviewCount})',
+                            '($reviewCount)',
                             style: AppTextStyles.ratingCountText.copyWith(
                               color: Colors.white70,
                               fontSize: 8,
@@ -197,12 +217,12 @@ class ProductCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tags Row (SingleChildScrollView with Row to prevent vertical overflow)
-                    if (product.tags.isNotEmpty) ...[
+                    if (tags.isNotEmpty) ...[
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         child: Row(
-                          children: product.tags.map((tag) {
+                          children: tags.map((tag) {
                             return Container(
                               margin: const EdgeInsets.only(right: 4.0),
                               padding: const EdgeInsets.symmetric(
@@ -227,10 +247,9 @@ class ProductCard extends StatelessWidget {
                       const SizedBox(height: 6),
                     ],
 
-                    // Product Name (Expanded to take remaining height safely)
                     Expanded(
                       child: Text(
-                        product.name,
+                        product.title ?? '',
                         style: AppTextStyles.productTitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -238,7 +257,6 @@ class ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
 
-                    // Price Section & Buy Indicator
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -246,31 +264,46 @@ class ProductCard extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (product.originalPrice != null && 
-                                product.originalPrice! > product.price) ...[
+                            if (hasDiscount) ...[
                               Text(
-                                '\$${product.originalPrice!.toStringAsFixed(2)}',
+                                '\$${originalPrice.toStringAsFixed(2)}',
                                 style: AppTextStyles.productOriginalPrice,
                               ),
                               const SizedBox(height: 2),
                             ],
                             Text(
-                              '\$${product.price.toStringAsFixed(2)}',
+                              '\$${currentPrice.toStringAsFixed(2)}',
                               style: AppTextStyles.productPrice,
                             ),
                           ],
                         ),
-                        // Add Button
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.add_shopping_cart_rounded,
-                            color: Colors.white,
-                            size: 16,
+                        GestureDetector(
+                          onTap: () {
+                            context.read<CartController>().addToCart(product);
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.title} added to cart!'),
+                                action: SnackBarAction(
+                                  label: 'View Cart',
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/cart');
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.add_shopping_cart_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],

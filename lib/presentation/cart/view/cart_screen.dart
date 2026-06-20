@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../controller/cart_controller.dart';
@@ -9,7 +10,8 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cartController = CartController.instance;
+    final cartController = context.watch<CartController>();
+    final items = cartController.items;
 
     return Scaffold(
       backgroundColor: AppColors.bgMain,
@@ -22,125 +24,111 @@ class CartScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          ListenableBuilder(
-            listenable: cartController,
-            builder: (context, _) {
-              if (cartController.items.isEmpty) return const SizedBox();
-              return TextButton(
-                onPressed: () => _showClearCartConfirmation(context, cartController),
-                child: const Text('Clear All', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
-              );
-            },
-          ),
+          if (items.isNotEmpty)
+            TextButton(
+              onPressed: () => _showClearCartConfirmation(context, cartController),
+              child: const Text('Clear All', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
+            ),
           const SizedBox(width: 8),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: cartController,
-        builder: (context, _) {
-          final items = cartController.items;
+      body: items.isEmpty
+          ? _buildEmptyState(context)
+          : Stack(
+              children: [
+                // Scrollable checkout items list
+                ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 220), // reserve space for sticky bottom checkout sheet
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return CartItemCard(
+                      item: item,
+                      onRemove: () => cartController.removeFromCart(item.product.id),
+                      onQuantityChanged: (newQty) => cartController.updateQuantity(item.product.id, newQty),
+                    );
+                  },
+                ),
 
-          if (items.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          return Stack(
-            children: [
-              // Scrollable checkout items list
-              ListView.builder(
-                padding: const EdgeInsets.only(bottom: 220), // reserve space for sticky bottom checkout sheet
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return CartItemCard(
-                    item: item,
-                    onRemove: () => cartController.removeFromCart(item.product.id),
-                    onQuantityChanged: (newQty) => cartController.updateQuantity(item.product.id, newQty),
-                  );
-                },
-              ),
-
-              // Sticky Bottom Checkout Summary Panel
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(24.0),
-                  decoration: const BoxDecoration(
-                    color: AppColors.bgCard,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadowColor,
-                        blurRadius: 16,
-                        offset: Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Subtotal
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Subtotal', style: TextStyle(color: AppColors.textSecondary)),
-                          Text('\$${cartController.subtotal.toStringAsFixed(2)}', style: AppTextStyles.subSectionHeader),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // Delivery Charges
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Delivery Charges', style: TextStyle(color: AppColors.textSecondary)),
-                          Text(
-                            cartController.deliveryCharge == 0.0 ? 'FREE' : '\$${cartController.deliveryCharge.toStringAsFixed(2)}',
-                            style: AppTextStyles.subSectionHeader.copyWith(
-                              color: cartController.deliveryCharge == 0.0 ? AppColors.accent : AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 24, color: AppColors.borderLight),
-                      // Total Amount
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                          Text(
-                            '\$${cartController.totalAmount.toStringAsFixed(2)}',
-                            style: AppTextStyles.productPrice.copyWith(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      // Checkout Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => _simulateCheckout(context, cartController),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text('Proceed to Checkout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                // Sticky Bottom Checkout Summary Panel
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: const BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowColor,
+                          blurRadius: 16,
+                          offset: Offset(0, -4),
                         ),
-                      )
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Subtotal
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Subtotal', style: TextStyle(color: AppColors.textSecondary)),
+                            Text('\$${cartController.subtotal.toStringAsFixed(2)}', style: AppTextStyles.subSectionHeader),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Delivery Charges
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Delivery Charges', style: TextStyle(color: AppColors.textSecondary)),
+                            Text(
+                              cartController.deliveryCharge == 0.0 ? 'FREE' : '\$${cartController.deliveryCharge.toStringAsFixed(2)}',
+                              style: AppTextStyles.subSectionHeader.copyWith(
+                                color: cartController.deliveryCharge == 0.0 ? AppColors.accent : AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24, color: AppColors.borderLight),
+                        // Total Amount
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            Text(
+                              '\$${cartController.totalAmount.toStringAsFixed(2)}',
+                              style: AppTextStyles.productPrice.copyWith(fontSize: 20),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        // Checkout Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => _simulateCheckout(context, cartController),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text('Proceed to Checkout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
+              ],
+            ),
     );
   }
 

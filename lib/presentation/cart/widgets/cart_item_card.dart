@@ -43,7 +43,7 @@ class CartItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              product.imageUrl,
+              product.thumbnail ?? '',
               width: 80,
               height: 80,
               fit: BoxFit.cover,
@@ -69,7 +69,7 @@ class CartItemCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        product.name,
+                        product.title ?? '',
                         style: AppTextStyles.productTitle.copyWith(fontSize: 13),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -91,7 +91,7 @@ class CartItemCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      '\$${(product.price ?? 0.0).toStringAsFixed(2)}',
                       style: AppTextStyles.productPrice.copyWith(fontSize: 15),
                     ),
 

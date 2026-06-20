@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../../data/models/product.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../home_screen/model/product_model.dart';
 
 /// Represents a product in the shopping cart with its current quantity.
 class CartItem {
@@ -11,24 +13,56 @@ class CartItem {
     this.quantity = 1,
   });
 
-  double get totalProductPrice => product.price * quantity;
+  double get totalProductPrice => (product.price ?? 0.0) * quantity;
+
+  Map<String, dynamic> toJson() => {
+        'product': product.toJson(),
+        'quantity': quantity,
+      };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
+        product: Product.fromJson(json['product']),
+        quantity: json['quantity'] ?? 1,
+      );
 }
 
-/// Global singleton controller to manage shopping cart operations and prices.
+/// ChangeNotifier controller to manage shopping cart operations via Provider with local storage persistence.
 class CartController extends ChangeNotifier {
-  // Private constructor
-  CartController._internal() {
-    // Populate with some mock items for visual richness initially
-    final mockProducts = Product.getDummyProducts();
-    _cartItems[mockProducts[0].id] = CartItem(product: mockProducts[0], quantity: 1);
-    _cartItems[mockProducts[2].id] = CartItem(product: mockProducts[2], quantity: 2);
+  // Storage mapping Product ID (int) -> CartItem
+  final Map<int, CartItem> _cartItems = {};
+
+  CartController() {
+    _loadFromPrefs();
   }
 
-  // Singleton instance
-  static final CartController instance = CartController._internal();
+  Future<void> _loadFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedCart = prefs.getStringList('cart_items') ?? [];
+      _cartItems.clear();
+      for (var itemStr in savedCart) {
+        final Map<String, dynamic> itemJson = jsonDecode(itemStr);
+        final item = CartItem.fromJson(itemJson);
+        final id = item.product.id;
+        if (id != null) {
+          _cartItems[id] = item;
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Failed to load cart: $e");
+    }
+  }
 
-  // Storage mapping Product ID -> CartItem
-  final Map<String, CartItem> _cartItems = {};
+  Future<void> _saveToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> cartList = _cartItems.values.map((item) => jsonEncode(item.toJson())).toList();
+      await prefs.setStringList('cart_items', cartList);
+    } catch (e) {
+      debugPrint("Failed to save cart: $e");
+    }
+  }
 
   // Retrieve all cart items
   List<CartItem> get items => _cartItems.values.toList();
@@ -61,37 +95,45 @@ class CartController extends ChangeNotifier {
 
   /// Adds a product to the cart or increments its count if already added
   void addToCart(Product product) {
-    if (_cartItems.containsKey(product.id)) {
-      _cartItems[product.id]!.quantity += 1;
+    final id = product.id;
+    if (id == null) return;
+
+    if (_cartItems.containsKey(id)) {
+      _cartItems[id]!.quantity += 1;
     } else {
-      _cartItems[product.id] = CartItem(product: product);
+      _cartItems[id] = CartItem(product: product);
     }
+    _saveToPrefs();
     notifyListeners();
   }
 
   /// Removes an item from the cart completely
-  void removeFromCart(String productId) {
+  void removeFromCart(int? productId) {
+    if (productId == null) return;
     if (_cartItems.containsKey(productId)) {
       _cartItems.remove(productId);
+      _saveToPrefs();
       notifyListeners();
     }
   }
 
   /// Updates quantity of an item. If quantity <= 0, removes the item
-  void updateQuantity(String productId, int newQty) {
-    if (!_cartItems.containsKey(productId)) return;
+  void updateQuantity(int? productId, int newQty) {
+    if (productId == null || !_cartItems.containsKey(productId)) return;
 
     if (newQty <= 0) {
       _cartItems.remove(productId);
     } else {
       _cartItems[productId]!.quantity = newQty;
     }
+    _saveToPrefs();
     notifyListeners();
   }
 
   /// Clears all cart items
   void clearCart() {
     _cartItems.clear();
+    _saveToPrefs();
     notifyListeners();
   }
 }
