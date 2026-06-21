@@ -1,9 +1,8 @@
 import 'dart:convert';
+import 'package:ewire/data/model/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../home_screen/model/product_model.dart';
 
-/// Represents a product in the shopping cart with its current quantity.
 class CartItem {
   final Product product;
   int quantity;
@@ -26,9 +25,7 @@ class CartItem {
       );
 }
 
-/// ChangeNotifier controller to manage shopping cart operations via Provider with local storage persistence.
 class CartController extends ChangeNotifier {
-  // Storage mapping Product ID (int) -> CartItem
   final Map<int, CartItem> _cartItems = {};
 
   CartController() {
@@ -64,36 +61,30 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  // Retrieve all cart items
   List<CartItem> get items => _cartItems.values.toList();
 
-  // Get total unique item types
+
   int get uniqueItemCount => _cartItems.length;
 
-  // Get total aggregate quantity of items in cart
   int get itemCount {
     int total = 0;
     _cartItems.forEach((_, item) => total += item.quantity);
     return total;
   }
 
-  // Calculate items subtotal
   double get subtotal {
     double total = 0.0;
     _cartItems.forEach((_, item) => total += item.totalProductPrice);
     return total;
   }
 
-  // Shipping charges mockup (e.g. flat rate of $10, free above $200)
   double get deliveryCharge {
     if (_cartItems.isEmpty) return 0.0;
     return subtotal > 200.0 ? 0.0 : 10.00;
   }
 
-  // Calculate total checkout amount
   double get totalAmount => subtotal + deliveryCharge;
 
-  /// Adds a product to the cart or increments its count if already added
   void addToCart(Product product) {
     final id = product.id;
     if (id == null) return;
@@ -107,7 +98,6 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Removes an item from the cart completely
   void removeFromCart(int? productId) {
     if (productId == null) return;
     if (_cartItems.containsKey(productId)) {
@@ -117,7 +107,6 @@ class CartController extends ChangeNotifier {
     }
   }
 
-  /// Updates quantity of an item. If quantity <= 0, removes the item
   void updateQuantity(int? productId, int newQty) {
     if (productId == null || !_cartItems.containsKey(productId)) return;
 
@@ -130,7 +119,6 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clears all cart items
   void clearCart() {
     _cartItems.clear();
     _saveToPrefs();

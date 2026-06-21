@@ -1,5 +1,5 @@
+import 'package:ewire/data/model/product_model.dart';
 import 'package:http/http.dart' as http;
-import '../../presentation/home_screen/model/product_model.dart';
 
 class ApiService {
   final String _baseUrl = 'https://dummyjson.com/products';

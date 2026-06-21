@@ -1,3 +1,4 @@
+import 'package:ewire/data/model/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -5,7 +6,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../product_details/view/product_details_screen.dart';
 import '../../wishlist/controller/wishlist_controller.dart';
 import '../../cart/controller/cart_controller.dart';
-import '../model/product_model.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -28,7 +28,6 @@ class ProductCard extends StatelessWidget {
     final double discount = product.discountPercentage ?? 0.0;
     final bool hasDiscount = discount > 0;
     
-    // Calculate the original price before discount
     final double originalPrice = hasDiscount 
         ? currentPrice / (1 - (discount / 100)) 
         : currentPrice;
@@ -53,11 +52,11 @@ class ProductCard extends StatelessWidget {
             color: AppColors.borderLight,
             width: 1.0,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
               blurRadius: 10.0,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -65,12 +64,10 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Stack
             AspectRatio(
               aspectRatio: 1.1,
               child: Stack(
                 children: [
-                  // Image with loading & error fallbacks
                   Positioned.fill(
                     child: Image.network(
                       product.thumbnail ?? (product.images != null && product.images!.isNotEmpty ? product.images!.first : ''),
@@ -79,7 +76,7 @@ class ProductCard extends StatelessWidget {
                         if (loadingProgress == null) return child;
                         return Container(
                           color: AppColors.bgSearch,
-                          child: const Center(
+                          child: Center(
                             child: SizedBox(
                               width: 24,
                               height: 24,
@@ -100,7 +97,7 @@ class ProductCard extends StatelessWidget {
                               end: Alignment.bottomRight,
                             ),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.image_not_supported_outlined,
                               size: 40,
@@ -112,7 +109,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Discount Badge
                   if (hasDiscount)
                     Positioned(
                       top: 12,
@@ -136,13 +132,12 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
 
-                  // Wishlist Icon Button
                   Positioned(
                     top: 8,
                     right: 8,
                     child: ClipOval(
                       child: Material(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: AppColors.bgCard.withValues(alpha: 0.9),
                         child: InkWell(
                           onTap: onWishlistTap ?? () {
                             context.read<WishlistController>().toggleWishlist(product.id);
@@ -164,7 +159,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Rating Badge Overlay
                   Positioned(
                     bottom: 8,
                     left: 8,
@@ -180,7 +174,7 @@ class ProductCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             color: AppColors.rating,
                             size: 14,
@@ -209,14 +203,12 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            // Product Details
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tags Row (SingleChildScrollView with Row to prevent vertical overflow)
                     if (tags.isNotEmpty) ...[
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,

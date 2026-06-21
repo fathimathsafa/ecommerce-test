@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../home_screen/controller/home_controller.dart';
 import '../../home_screen/widgets/product_card.dart';
 import '../../navigation/controller/navigation_controller.dart';
@@ -12,9 +13,9 @@ class WishlistScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>(); 
     final wishlistController = context.watch<WishlistController>();
     
-    // Retrieve the active list of all loaded products from the HomeController
     final allProducts = context.read<HomeController>().allProducts;
     final wishlistedProducts = wishlistController.getWishlistedProducts(allProducts);
 
@@ -24,7 +25,7 @@ class WishlistScreen extends StatelessWidget {
         title: const Text('My Wishlist', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false, // Inside tab navigation, no back button
+        automaticallyImplyLeading: false, 
       ),
       body: wishlistedProducts.isEmpty
           ? _buildEmptyState(context)
@@ -70,19 +71,19 @@ class WishlistScreen extends StatelessWidget {
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.favorite_border_rounded,
                 size: 64,
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No Saved Items',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Save your favorite products to buy them later or track price drops.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, height: 1.4),
@@ -90,7 +91,6 @@ class WishlistScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                // Switch back to Home tab
                 context.read<NavigationController>().selectTab(0);
               },
               style: ElevatedButton.styleFrom(

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../cart/controller/cart_controller.dart';
 import '../../wishlist/controller/wishlist_controller.dart';
 import '../../navigation/controller/navigation_controller.dart';
 import '../controller/profile_controller.dart';
 import '../widgets/profile_widgets.dart';
 
-/// The Profile Screen displays member information, active statistics, and support settings.
-/// Refactored to StatelessWidget utilizing ProfileController.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -21,21 +20,21 @@ class ProfileScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
+          title: Text(
             'Log Out',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to log out of SwiftCart?',
+          content: Text(
+            'Are you sure you want to log out of Swift Cart?',
             style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
+              child: Text(
                 'Cancel',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -62,16 +61,83 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showThemeSelectionDialog(BuildContext context, ThemeController themeController) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.bgCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Choose Theme',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ThemeOptionButton(
+                icon: Icons.light_mode_rounded,
+                label: 'Light',
+                isSelected: themeController.themeMode == ThemeMode.light,
+                onTap: () {
+                  themeController.setThemeMode(ThemeMode.light);
+                  Navigator.pop(dialogContext);
+                },
+              ),
+              ThemeOptionButton(
+                icon: Icons.dark_mode_rounded,
+                label: 'Dark',
+                isSelected: themeController.themeMode == ThemeMode.dark,
+                onTap: () {
+                  themeController.setThemeMode(ThemeMode.dark);
+                  Navigator.pop(dialogContext);
+                },
+              ),
+              ThemeOptionButton(
+                icon: Icons.brightness_auto_rounded,
+                label: 'System',
+                isSelected: themeController.themeMode == ThemeMode.system,
+                onTap: () {
+                  themeController.setThemeMode(ThemeMode.system);
+                  Navigator.pop(dialogContext);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileController = context.watch<ProfileController>();
     final cartController = context.watch<CartController>();
     final wishlistController = context.watch<WishlistController>();
+    final themeController = context.watch<ThemeController>();
+
+    IconData themeIcon;
+    String themeSubtitle;
+    if (themeController.themeMode == ThemeMode.dark) {
+      themeIcon = Icons.dark_mode_rounded;
+      themeSubtitle = 'Dark Mode active';
+    } else if (themeController.themeMode == ThemeMode.light) {
+      themeIcon = Icons.light_mode_rounded;
+      themeSubtitle = 'Light Mode active';
+    } else {
+      themeIcon = Icons.brightness_auto_rounded;
+      themeSubtitle = 'Follows system preferences';
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bgMain,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'My Profile',
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -87,7 +153,6 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            // Profile Card Header (extracted)
             ProfileHeaderCard(
               userName: profileController.userName,
               userEmail: profileController.userEmail,
@@ -95,13 +160,12 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Statistics Row (extracted)
             ProfileStatsRow(
               activeOrders: profileController.activeOrdersCount.toString(),
               savedItems: wishlistController.wishlistCount.toString(),
               itemsInCart: cartController.itemCount.toString(),
               onWishlistTap: () {
-                context.read<NavigationController>().selectTab(1); // Go to wishlist tab
+                context.read<NavigationController>().selectTab(1);
               },
               onCartTap: () {
                 Navigator.pushNamed(context, '/cart');
@@ -109,7 +173,6 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Settings/Menus Section (extracted)
             ProfileMenuCard(
               title: 'Personal Info',
               items: [
@@ -156,6 +219,13 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () {},
                 ),
                 ProfileMenuItem(
+                  icon: themeIcon,
+                  color: Colors.purple,
+                  title: 'App Theme',
+                  subtitle: themeSubtitle,
+                  onTap: () => _showThemeSelectionDialog(context, themeController),
+                ),
+                ProfileMenuItem(
                   icon: Icons.logout_rounded,
                   color: AppColors.wishlist,
                   title: 'Log Out',
@@ -172,3 +242,4 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Controller to manage profile details and state.
 class ProfileController extends ChangeNotifier {
   String _userName = 'Demo User';
   String _userEmail = 'demouser@swiftcart.com';
@@ -12,7 +11,6 @@ class ProfileController extends ChangeNotifier {
   String get membership => _membership;
   int get activeOrdersCount => _activeOrdersCount;
 
-  /// Updates the user profile name and email
   void updateProfile(String name, String email) {
     if (name.trim().isNotEmpty) {
       _userName = name.trim();

@@ -1,25 +1,15 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../product_details/view/product_details_screen.dart';
 import '../controller/home_controller.dart';
-import '../model/product_model.dart';
+import 'package:ewire/data/model/product_model.dart';
 
-class PromoBanner extends StatefulWidget {
+class PromoBanner extends StatelessWidget {
   const PromoBanner({super.key});
 
-  @override
-  State<PromoBanner> createState() => _PromoBannerState();
-}
-
-class _PromoBannerState extends State<PromoBanner> {
-  final PageController _pageController = PageController();
-  Timer? _timer;
-  int _localPage = 0;
-
-  final List<LinearGradient> _gradients = const [
+  static const List<LinearGradient> _gradients = [
     LinearGradient(
       colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
       begin: Alignment.topLeft,
@@ -38,33 +28,6 @@ class _PromoBannerState extends State<PromoBanner> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    // Auto-scroll every 4 seconds
-    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (_pageController.hasClients) {
-        final homeController = context.read<HomeController>();
-        final promoProducts = homeController.promoProducts;
-        if (promoProducts.isNotEmpty) {
-          final nextPage = (_localPage + 1) % promoProducts.length;
-          _pageController.animateToPage(
-            nextPage,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOutCubic,
-          );
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final homeController = context.watch<HomeController>();
     final promoProducts = homeController.promoProducts;
@@ -78,7 +41,7 @@ class _PromoBannerState extends State<PromoBanner> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.borderLight),
         ),
-        child: const Center(
+        child: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
@@ -89,13 +52,8 @@ class _PromoBannerState extends State<PromoBanner> {
         SizedBox(
           height: 160,
           child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _localPage = index;
-              });
-              homeController.updatePromoIndex(index);
-            },
+            controller: homeController.pageController,
+            onPageChanged: homeController.updatePromoIndex,
             itemCount: promoProducts.length,
             itemBuilder: (context, index) {
               final product = promoProducts[index];
@@ -121,11 +79,11 @@ class _PromoBannerState extends State<PromoBanner> {
                   decoration: BoxDecoration(
                     gradient: gradient,
                     borderRadius: BorderRadius.circular(20.0),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
                         color: AppColors.shadowColor,
                         blurRadius: 12.0,
-                        offset: Offset(0, 6),
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -271,9 +229,9 @@ class _PromoBannerState extends State<PromoBanner> {
               duration: const Duration(milliseconds: 350),
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
               height: 6.0,
-              width: _localPage == index ? 18.0 : 6.0,
+              width: homeController.currentPromoIndex == index ? 18.0 : 6.0,
               decoration: BoxDecoration(
-                color: _localPage == index
+                color: homeController.currentPromoIndex == index
                     ? AppColors.primary
                     : AppColors.textMuted.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(3.0),

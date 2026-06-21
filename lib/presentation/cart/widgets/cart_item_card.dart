@@ -29,17 +29,16 @@ class CartItemCard extends StatelessWidget {
           color: AppColors.borderLight,
           width: 1.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadowColor,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           )
         ],
       ),
       child: Row(
         children: [
-          // Image Thumbnail
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
@@ -57,12 +56,10 @@ class CartItemCard extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Details Column
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product Title & Remove button
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -76,7 +73,7 @@ class CartItemCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.wishlist, size: 20),
+                      icon: Icon(Icons.delete_outline_rounded, color: AppColors.wishlist, size: 20),
                       onPressed: onRemove,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -86,7 +83,6 @@ class CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Price and Quantity Adjuster Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -95,7 +91,6 @@ class CartItemCard extends StatelessWidget {
                       style: AppTextStyles.productPrice.copyWith(fontSize: 15),
                     ),
 
-                    // Quantity controls
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.bgSearch,
@@ -104,7 +99,7 @@ class CartItemCard extends StatelessWidget {
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove, size: 14, color: AppColors.textPrimary),
+                            icon: Icon(Icons.remove, size: 14, color: AppColors.textPrimary),
                             onPressed: () => onQuantityChanged(item.quantity - 1),
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                             padding: EdgeInsets.zero,
@@ -114,7 +109,7 @@ class CartItemCard extends StatelessWidget {
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.add, size: 14, color: AppColors.textPrimary),
+                            icon: Icon(Icons.add, size: 14, color: AppColors.textPrimary),
                             onPressed: () => onQuantityChanged(item.quantity + 1),
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                             padding: EdgeInsets.zero,

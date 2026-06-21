@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../controller/cart_controller.dart';
 import '../widgets/cart_item_card.dart';
 
@@ -10,6 +11,7 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>(); 
     final cartController = context.watch<CartController>();
     final items = cartController.items;
 
@@ -20,14 +22,14 @@ class CartScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           if (items.isNotEmpty)
             TextButton(
               onPressed: () => _showClearCartConfirmation(context, cartController),
-              child: const Text('Clear All', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
+              child: Text('Clear All', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
             ),
           const SizedBox(width: 8),
         ],
@@ -36,7 +38,6 @@ class CartScreen extends StatelessWidget {
           ? _buildEmptyState(context)
           : Stack(
               children: [
-                // Scrollable checkout items list
                 ListView.builder(
                   padding: const EdgeInsets.only(bottom: 220), // reserve space for sticky bottom checkout sheet
                   itemCount: items.length,
@@ -50,41 +51,38 @@ class CartScreen extends StatelessWidget {
                   },
                 ),
 
-                // Sticky Bottom Checkout Summary Panel
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: Container(
                     padding: const EdgeInsets.all(24.0),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.bgCard,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24.0)),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.shadowColor,
                           blurRadius: 16,
-                          offset: Offset(0, -4),
+                          offset: const Offset(0, -4),
                         ),
                       ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Subtotal
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Subtotal', style: TextStyle(color: AppColors.textSecondary)),
+                            Text('Subtotal', style: TextStyle(color: AppColors.textSecondary)),
                             Text('\$${cartController.subtotal.toStringAsFixed(2)}', style: AppTextStyles.subSectionHeader),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        // Delivery Charges
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Delivery Charges', style: TextStyle(color: AppColors.textSecondary)),
+                            Text('Delivery Charges', style: TextStyle(color: AppColors.textSecondary)),
                             Text(
                               cartController.deliveryCharge == 0.0 ? 'FREE' : '\$${cartController.deliveryCharge.toStringAsFixed(2)}',
                               style: AppTextStyles.subSectionHeader.copyWith(
@@ -93,12 +91,11 @@ class CartScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const Divider(height: 24, color: AppColors.borderLight),
-                        // Total Amount
+                        Divider(height: 24, color: AppColors.borderLight),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                             Text(
                               '\$${cartController.totalAmount.toStringAsFixed(2)}',
                               style: AppTextStyles.productPrice.copyWith(fontSize: 20),
@@ -106,7 +103,6 @@ class CartScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        // Checkout Button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -145,19 +141,19 @@ class CartScreen extends StatelessWidget {
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.shopping_basket_outlined,
                 size: 64,
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Your Cart is Empty',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Looks like you haven’t added any items to your cart yet.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, height: 1.4),
@@ -190,14 +186,14 @@ class CartScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () {
               controller.clearCart();
               Navigator.pop(context);
             },
-            child: const Text('Clear', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
+            child: Text('Clear', style: TextStyle(color: AppColors.wishlist, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -210,11 +206,10 @@ class CartScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        // Automatically close dialog after 2 seconds to simulate successful order placing
         Future.delayed(const Duration(seconds: 2), () {
           if (!context.mounted) return;
           controller.clearCart();
-          navigator.pop(); // close loader dialog
+          navigator.pop(); 
           showDialog(
             context: context,
             builder: (successContext) => AlertDialog(
@@ -224,8 +219,8 @@ class CartScreen extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(successContext).pop(); // close success dialog
-                    navigator.pop(); // pop back to main home page
+                    Navigator.of(successContext).pop(); 
+                    navigator.pop(); 
                   },
                   child: const Text('Awesome', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
@@ -237,10 +232,10 @@ class CartScreen extends StatelessWidget {
         return AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               CircularProgressIndicator(color: AppColors.primary),
-              SizedBox(height: 16),
-              Text('Processing order, please wait...', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              const Text('Processing order, please wait...', style: TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

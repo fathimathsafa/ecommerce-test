@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home_screen/view/home_screen.dart';
 import '../../wishlist/view/wishlist_screen.dart';
@@ -7,30 +8,31 @@ import '../../profile/view/profile_screen.dart';
 import '../controller/navigation_controller.dart';
 
 class NavigationScreen extends StatelessWidget {
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const WishlistScreen(),
-    const ProfileScreen(),
-  ];
-
-  NavigationScreen({super.key});
+  const NavigationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final navigationController = context.watch<NavigationController>();
+    context.watch<ThemeController>(); 
+
+    final screens = [
+      const HomeScreen(),
+      const WishlistScreen(),
+      const ProfileScreen(),
+    ];
 
     return Scaffold(
       body: IndexedStack(
         index: navigationController.selectedIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
               blurRadius: 16,
-              offset: Offset(0, -4),
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -71,5 +73,4 @@ class NavigationScreen extends StatelessWidget {
   }
 }
 
-/// Simple placeholder screen for Profile tab
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../cart/controller/cart_controller.dart';
 import '../../cart/view/cart_screen.dart';
 import '../../product_details/view/product_details_screen.dart';
@@ -12,13 +13,12 @@ import '../widgets/product_card.dart';
 import '../widgets/promo_banner.dart';
 import '../widgets/search_bar_widget.dart';
 
-/// The primary E-commerce Home / Product Listing Screen.
-/// Refactored to listen to controllers reactively via Provider.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeController>(); 
     final homeController = context.watch<HomeController>();
     final cartController = context.watch<CartController>();
 
@@ -32,7 +32,6 @@ class HomeScreen extends StatelessWidget {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Header text & Search section
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
@@ -52,7 +51,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // Promo Banners Section
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -60,7 +58,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // Categories Header & Chip selector
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -72,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Categories',
                             style: AppTextStyles.sectionHeader,
                           ),
@@ -100,14 +97,13 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // Product grid title / items count
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Popular Products',
                       style: AppTextStyles.subSectionHeader,
                     ),
@@ -122,10 +118,8 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // Loading, Empty, Error, or Product Grid Layout
             _buildProductSection(context, homeController),
 
-            // Bottom padding
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
@@ -133,7 +127,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// App Bar builder for a cleaner root build method
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
     CartController cartController,
@@ -148,8 +141,8 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'SwiftCart',
+          Text(
+            'Swift Cart',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -165,7 +158,7 @@ class HomeScreen extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.shopping_bag_outlined,
                 color: AppColors.textPrimary,
               ),
@@ -182,7 +175,7 @@ class HomeScreen extends StatelessWidget {
                 top: 8,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
@@ -210,7 +203,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Grid viewport logic based on state (Loading, Empty, Data, Error)
   Widget _buildProductSection(
     BuildContext context,
     HomeController homeController,
@@ -240,13 +232,13 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
                 size: 64,
                 color: AppColors.wishlist,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Failed to Load Products',
                 style: AppTextStyles.subSectionHeader,
               ),
@@ -291,14 +283,14 @@ class HomeScreen extends StatelessWidget {
                   color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.search_off_rounded,
                   size: 64,
                   color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'No Products Found',
                 style: AppTextStyles.subSectionHeader,
               ),

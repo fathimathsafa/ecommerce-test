@@ -51,11 +51,11 @@ class CategorySelector extends StatelessWidget {
                             offset: const Offset(0, 4),
                           )
                         ]
-                      : const [
+                      : [
                           BoxShadow(
                             color: AppColors.shadowColor,
                             blurRadius: 4.0,
-                            offset: Offset(0, 2),
+                            offset: const Offset(0, 2),
                           )
                         ],
                 ),

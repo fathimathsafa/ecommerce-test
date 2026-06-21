@@ -1,9 +1,8 @@
+import 'dart:async';
+import 'package:ewire/data/model/product_model.dart';
 import 'package:flutter/material.dart';
 import '../../../data/services/api_service.dart';
-import '../model/product_model.dart';
 
-/// Controller class managing the state of the home screen / product listing.
-/// Connects to [ApiService] to fetch products dynamically.
 class HomeController extends ChangeNotifier {
   final ApiService _apiService = ApiService();
   
@@ -16,6 +15,8 @@ class HomeController extends ChangeNotifier {
   String? _errorMessage;
 
   int _currentPromoIndex = 0;
+  final PageController _pageController = PageController();
+  Timer? _promoTimer;
 
   // Getters
   List<Product> get products => _filteredProducts;
@@ -25,6 +26,7 @@ class HomeController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get currentPromoIndex => _currentPromoIndex;
+  PageController get pageController => _pageController;
 
   /// Retrieve top 3 highest discount products for promo banner
   List<Product> get promoProducts {
@@ -59,6 +61,32 @@ class HomeController extends ChangeNotifier {
   // Constructor
   HomeController() {
     loadProducts();
+    _startPromoTimer();
+  }
+
+  /// Starts periodic timer to scroll promo banner
+  void _startPromoTimer() {
+    _promoTimer?.cancel();
+    _promoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        final promoCount = promoProducts.length;
+        if (promoCount > 0) {
+          final nextPage = (_currentPromoIndex + 1) % promoCount;
+          _pageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _promoTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
   }
 
   /// Fetches products listing from API service

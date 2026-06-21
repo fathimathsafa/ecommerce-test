@@ -18,11 +18,11 @@ class SearchBarWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(16.0),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadowColor,
             blurRadius: 10.0,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -32,7 +32,7 @@ class SearchBarWidget extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: AppTextStyles.bodyMuted.copyWith(fontSize: 14),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
             color: AppColors.textMuted,
             size: 22,

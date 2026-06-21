@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Controller managing the active bottom navigation tab index via Provider.
 class NavigationController extends ChangeNotifier {
   int _selectedIndex = 0;
 
